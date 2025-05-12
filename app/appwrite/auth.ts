@@ -4,7 +4,11 @@ import { redirect } from 'react-router';
 
 export const loginWithGoogle = async () => {
 	try {
-		account.createOAuth2Session(OAuthProvider.Google);
+		account.createOAuth2Session(
+			OAuthProvider.Google,
+			`${window.location.origin}/`,
+			`${window.location.origin}/404`
+		);
 	} catch (error) {
 		console.log('loginWithGoogle', error);
 	}
@@ -13,10 +17,7 @@ export const loginWithGoogle = async () => {
 export const getUser = async () => {
 	try {
 		const user = await account.get();
-
-		if (!user) {
-			return redirect('/sign-in');
-		}
+		if (!user) return redirect('/sign-in');
 
 		const { documents } = await database.listDocuments(
 			appwriteConfig.databaseId,
@@ -26,8 +27,11 @@ export const getUser = async () => {
 				Query.select(['name', 'email', 'imageUrl', 'joinedAt', 'accountId']),
 			]
 		);
+
+		return documents.length > 0 ? documents[0] : redirect('/sign-in');
 	} catch (error) {
-		console.log(error);
+		console.error('Error fetching user:', error);
+		return null;
 	}
 };
 
